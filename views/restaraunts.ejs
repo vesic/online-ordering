@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Restaraunts</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+</head>
+<body>
+<div class="container">
+    <div class="row col-md-6 col-md-offset-2">
+    <table class="table table-striped">
+    <thead>
+    <a href="#" class="btn btn-primary btn-xs pull-right"><b>+</b> Add new</a>
+        <tr>
+            <th>name</th>
+            <th>lat</th>
+            <th>lng</th>
+        </tr>
+    </thead>
+    <tbody>
+        <% data.forEach(function(r) { %>
+            <tr>
+                <td><%= r.name %></td>
+                <td><%= r.geo[1] %></td>
+                <td><%= r.geo[0] %></td>
+            </tr>
+        <% }); %>
+    </tbody>
+    </table>
+    </div>
+</div>
+</body>
+</html>
