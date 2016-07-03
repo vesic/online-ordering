@@ -6,6 +6,8 @@ var async = require('async');
 
 var app = express();
 
+app.set('port', (process.env.PORT || 3000));
+
 // mongoose
 var mongoose = require('mongoose');
 mongoose.connect('mongodb://vesic:vesic@ds037155.mlab.com:37155/my');
@@ -121,6 +123,6 @@ app.post('/set', (req, res) => {
     res.send({"message":"OK"});
 });
 
-app.listen(3000, function () {
+app.listen(app.get('port'), function () {
   console.log('Example app listening on port 3000!');
 });
