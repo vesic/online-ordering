@@ -21,8 +21,8 @@
         <% data.forEach(function(r) { %>
             <tr>
                 <td><%= r.name %></td>
-                <td><%= r.geo[1] %></td>
-                <td><%= r.geo[0] %></td>
+                <td><%= r.geo.coordinates[1] %></td>
+                <td><%= r.geo.coordinates[0] %></td>
             </tr>
         <% }); %>
     </tbody>
@@ -34,7 +34,7 @@
         <div class="modal-content">
         <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            <h4 class="modal-title" id="myModalLabel">Modal title</h4>
+            <h4 class="modal-title" id="myModalLabel">Add Restaraunt</h4>
         </div>
         <div class="modal-body">
             <form method="post">

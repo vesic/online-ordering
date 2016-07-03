@@ -2,6 +2,7 @@ var express = require('express');
 var session = require('express-session')
 var bodyParser = require('body-parser');
 var chance = require('chance').Chance();
+var async = require('async');
 
 var app = express();
 
@@ -17,18 +18,15 @@ app.use(session({
   secret: 'keyboard cat',
   resave: false,
   saveUninitialized: true,
-//   cookie: { secure: true }
 }));
 app.use(bodyParser.urlencoded({ extended: false }))
 app.set('view engine', 'ejs');
 
 app.get('/', (req, res) => {
-//   res.send('Hello World!');
     res.sendfile('index.html');
 });
 
 app.get('/restaurants', (req, res) => {
-    // res.send('Restaraunts');
     Restaraunt.find({}, (err, data) => {
         if (err) res.send(err);
 
@@ -37,12 +35,12 @@ app.get('/restaurants', (req, res) => {
 });
 
 app.get('/restaurants-seed', (req, res) => {
-    for (var i = 0; i < 1000; i++) {
+    for (var i = 0; i < 10000; i++) {
         new Restaraunt({
             name: chance.domain(),
             geo: {
-                "type":"Point",
-                coordinates: [chance.longitude({min: -124, max: -70}), chance.latitude({min: 28, max: 50})]
+                type:"Point",
+                coordinates: [chance.longitude({min: -105, max: -70}), chance.latitude({min: 28, max: 50})]
             }
         }).save();
     }
@@ -57,58 +55,59 @@ app.get('/restaurants-delete', (req, res) => {
 });
 
 app.get('/restaurants-find', (req, res) => {
-    var sess = req.session;
-    var lat = sess.lat;
-    var lng = sess.lng;
-    var distance = sess.distance;
-    console.log(distance);
-    Restaraunt.aggregate(
-        [
-            { "$geoNear": {
-                "near": {
-                    "type": "Point",
-                    "coordinates": [lng, lat]
-                },
-                "distanceField": "distance",
-                "sperical": true,
-                "maxDistance": 10000
-            }}
-        ],
-        function(err,results) {
-            if (!err) res.render('restaraunts', {data: data});
-            else res.send(err);
+    var sess, lat, lng, distance;
+
+    async.series([
+        function(callback){
+            sess = req.session;
+            lat = sess.lat;
+            lng = sess.lng;
+            distance = sess.distance;
+            callback();
+        },
+        function(callback){
+            Restaraunt.find({
+                'geo': {
+                    $near: {
+                        type: "Point",
+                        coordinates: [lng, lat]
+                    },
+                    $maxDistance: distance
+                }
+            }).exec((err, data) => {
+                if (err) res.send(err); 
+                
+                res.render('restaraunts', {data: data});
+            });
+            callback();
         }
-    )
-    // res.send('error');
-    // Restaraunt.find({
-    //     'geo': {
-    //         $near: {
-    //             type: "Point",
-    //             coordinates: [lng, lat]
-    //         },
-    //         $maxDistance: 10000
-    //     }
-    // }).exec((err, data) => {
-    //     if (err) res.send(err); 
-        
-    //     console.log('count', data.length);
-    //     res.render('restaraunts', {data: data});
-    //     // res.send(data);
-    // });
+    ]);
 });
 
 app.post('/restaraunt-add', (req, res) => {
+    var lat, lng;
     if (req.body.name && req.body.lat && req.body.lng) {
-        var lng = parseFloat(req.body.lng).toFixed(5);
-        var lat = parseFloat(req.body.lat).toFixed(5);
-        console.log(lng, lat);
-        new Restaraunt({
-            name: req.body.name,
-            geo: [lng, lat]
-        }).save();
+        async.series([
+            function(callback) {
+                lng = Number(req.body.lng).toFixed(5);
+                lat = Number(req.body.lat).toFixed(5);
+                callback();
+            },
+            function(callback) {
+                new Restaraunt({
+                    name: req.body.name,
+                    geo: {
+                        type: "Point",
+                        coordinates: [lng, lat]
+                    }
+                }).save();
+                res.send({"message":"OK"}); 
+                callback();
+            }
+        ]);
+        // console.log(lng, lat);
     }
-
-   res.send({"message":"OK"}); 
+    else res.send('Error');
 });
 
 app.post('/set', (req, res) => {
