@@ -10,7 +10,7 @@
     <div class="row col-md-6 col-md-offset-2">
     <table class="table table-striped">
     <thead>
-    <a href="#" class="btn btn-primary btn-xs pull-right"><b>+</b> Add new</a>
+    <a href="#" id="addNew" class="btn btn-primary btn-xs pull-right"><b>+</b> Add new</a>
         <tr>
             <th>name</th>
             <th>lat</th>
@@ -27,7 +27,62 @@
         <% }); %>
     </tbody>
     </table>
+
+    <!-- Modal -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="myModalLabel">Modal title</h4>
+        </div>
+        <div class="modal-body">
+            <form method="post">
+                <div>
+                    <label for="">Name</label>
+                    <input type="text" name="name" class="form-control" placeholder="Name">
+                </div>
+                <div>
+                    <br />
+                    <label for="">Latitude</label>
+                    <input type="text" name="lat" class="form-control" placeholder="Latitude">
+                </div>
+                <div>
+                    <br />
+                    <label for="">Longitude</label>
+                    <input type="text" name="lng" class="form-control" placeholder="Longitude">
+                </div>
+        </div>
+        <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">Add Restaraunt</button>
+            </form>
+        </div>
+        </div>
     </div>
-</div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js""></script>
+
+    <script>
+        $(function() {
+            $('#addNew').on('click', (event) => {
+                $('#myModal').modal({})
+                $('form').on('submit', (event) => {
+                    event.preventDefault();
+                    $("#myModal").modal('hide');
+                    var data = $('form').serialize();
+                    $.ajax({
+                        method: "POST",
+                        url: "/restaraunt-add",
+                        data: data
+                    })
+                    .done(function( msg ) {
+                        location.href = '/';
+                    });
+                })
+            });
+        });
+    </script>
 </body>
 </html>

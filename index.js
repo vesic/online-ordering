@@ -37,43 +37,78 @@ app.get('/restaurants', (req, res) => {
 });
 
 app.get('/restaurants-seed', (req, res) => {
-    // 45.267081, 19.835363
-    // new Restaraunt({
-    //     name: 'Novi Sad',
-    //     geo: [19.835363, 45.267081]
-    // }).save();
     for (var i = 0; i < 1000; i++) {
         new Restaraunt({
             name: chance.domain(),
-            geo: [
-                chance.longitude({min: -124, max: -70}),
-                chance.latitude({min: 28, max: 50})
-            ]
+            geo: {
+                "type":"Point",
+                coordinates: [chance.longitude({min: -124, max: -70}), chance.latitude({min: 28, max: 50})]
+            }
         }).save();
     }
+
     res.send('success');
+});
+
+app.get('/restaurants-delete', (req, res) => {
+    Restaraunt.remove().exec((err) => {
+        if (!err) res.send('Ok');
+    });
 });
 
 app.get('/restaurants-find', (req, res) => {
     var sess = req.session;
     var lat = sess.lat;
     var lng = sess.lng;
-    // console.log(lat, lng);
-    var distance = 10000 / 6371;
-    Restaraunt.find({
-        'geo': {
-            $near: [
-                lng,
-                lat
-            ],
-            $maxDistance: distance
+    var distance = sess.distance;
+    console.log(distance);
+    Restaraunt.aggregate(
+        [
+            { "$geoNear": {
+                "near": {
+                    "type": "Point",
+                    "coordinates": [lng, lat]
+                },
+                "distanceField": "distance",
+                "sperical": true,
+                "maxDistance": 10000
+            }}
+        ],
+        function(err,results) {
+            if (!err) res.render('restaraunts', {data: data});
+            else res.send(err);
         }
-    }).exec((err, data) => {
-        if (err) res.send(err);
+    )
+    // res.send('error');
+    // Restaraunt.find({
+    //     'geo': {
+    //         $near: {
+    //             type: "Point",
+    //             coordinates: [lng, lat]
+    //         },
+    //         $maxDistance: 10000
+    //     }
+    // }).exec((err, data) => {
+    //     if (err) res.send(err); 
         
-        res.render('restaraunts', {data: data});
-        // res.send(data);
-    });
+    //     console.log('count', data.length);
+    //     res.render('restaraunts', {data: data});
+    //     // res.send(data);
+    // });
+});
+
+app.post('/restaraunt-add', (req, res) => {
+    if (req.body.name && req.body.lat && req.body.lng) {
+        var lng = parseFloat(req.body.lng).toFixed(5);
+        var lat = parseFloat(req.body.lat).toFixed(5);
+        console.log(lng, lat);
+        new Restaraunt({
+            name: req.body.name,
+            geo: [lng, lat]
+        }).save();
+    }
+
+   res.send({"message":"OK"}); 
 });
 
 app.post('/set', (req, res) => {
@@ -83,14 +118,8 @@ app.post('/set', (req, res) => {
     var distance = req.body.distance;
     sess.lat = lat;
     sess.lng = lng;
-    sess.distance = distance;
-    console.log(lat, lng, distance);
+    sess.distance = Number(distance);
     res.send({"message":"OK"});
-});
-
-app.get('/get', (req, res) => {
-    var sess = req.session;
-    res.send('you name is '+ sess.lat + " " + sess.lng + " " + sess.distance);
 });
 
 app.listen(3000, function () {
